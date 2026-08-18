@@ -1,0 +1,4 @@
+A:\s
+B:\\s
+C:\p{Diacritic}
+D:\u0300
