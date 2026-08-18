@@ -9,7 +9,7 @@ function normalize(value: string): string {
   return value
     .toLowerCase()
     .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "");
+    .replace(/\p{Diacritic}/gu, "");
 }
 
 export default function ProcedureList({ procedures }: { procedures: ProcedureMeta[] }) {
