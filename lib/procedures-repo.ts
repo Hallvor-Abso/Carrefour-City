@@ -54,7 +54,7 @@ export async function listProcedures(): Promise<RepoListing> {
         const entries = await listRemoteDirectory(config, DIRECTORIES[scope]);
         const files = await Promise.all(
           entries.map(async (entry) => {
-            const slug = entry.name.replace(/\\.md$/, "");
+            const slug = entry.name.replace(/\.md$/, "");
             const file = await readRemoteFile(config, filePathFor(scope, slug));
             return file ? parse(scope, slug, file.text) : null;
           })

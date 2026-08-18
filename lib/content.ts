@@ -73,8 +73,8 @@ function toMeta(scope: Scope, slug: string, file: matter.GrayMatterFile<string>)
     updated: toIsoDate(data.updated),
     summary: typeof data.summary === "string" ? data.summary : "",
     searchText: file.content
-      .replace(/[#*`>_\\-\\[\\]()]/g, " ")
-      .replace(/\\s+/g, " ")
+      .replace(/[#*`>_\-\[\]()]/g, " ")
+      .replace(/\s+/g, " ")
       .trim()
       .toLowerCase(),
   };
@@ -86,7 +86,7 @@ export function getSlugs(scope: Scope): string[] {
   return fs
     .readdirSync(dir)
     .filter((name) => name.endsWith(".md"))
-    .map((name) => name.replace(/\\.md$/, ""));
+    .map((name) => name.replace(/\.md$/, ""));
 }
 
 export function getAllProcedures(scope: Scope): ProcedureMeta[] {
