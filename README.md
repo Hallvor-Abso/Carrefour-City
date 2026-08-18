@@ -68,11 +68,15 @@ suite.
 
 ### Créer le jeton GitHub
 
-1. Sur GitHub : **Settings → Developer settings → Personal access tokens → Fine-grained tokens →
-   Generate new token**.
-2. **Repository access** : *Only select repositories*, puis ce dépôt uniquement.
-3. **Permissions → Repository permissions → Contents** : *Read and write*. Rien d'autre.
-4. Copier le jeton et le coller dans `GITHUB_TOKEN` sur Vercel, avec `GITHUB_REPO`.
+Attention : il s'agit des réglages **du compte**, pas de ceux du dépôt. Le plus direct est
+d'ouvrir <https://github.com/settings/personal-access-tokens/new>. Sinon : avatar en haut à
+droite → **Settings** → tout en bas de la colonne de gauche → **Developer settings** →
+**Personal access tokens** → **Fine-grained tokens**.
+
+1. **Repository access** : *Only select repositories*, puis ce dépôt uniquement.
+2. **Permissions → Repository permissions → Contents** : *Read and write*. Rien d'autre.
+3. Générer le jeton et le copier immédiatement : GitHub ne le réaffiche jamais.
+4. Le coller dans `GITHUB_TOKEN` sur Vercel, avec `GITHUB_REPO`.
 
 Sans ces deux variables le site fonctionne normalement, mais l'éditeur s'affiche désactivé et les
 fiches se modifient uniquement sur GitHub.
