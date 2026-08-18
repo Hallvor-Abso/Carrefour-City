@@ -3,10 +3,34 @@ import path from "node:path";
 import matter from "gray-matter";
 import { marked } from "marked";
 
-const CONTENT_DIR = path.join(process.cwd(), "content");
+/** Deux corpus separes : les procedures de l'equipe, et celles du responsable. */
+export type Scope = "staff" | "admin";
+
+const DIRECTORIES: Record<Scope, string> = {
+  staff: "content",
+  admin: "content-admin",
+};
+
+const BASE_PATHS: Record<Scope, string> = {
+  staff: "/procedures",
+  admin: "/admin/procedures",
+};
+
+export function basePath(scope: Scope): string {
+  return BASE_PATHS[scope];
+}
+
+export function hrefFor(scope: Scope, slug: string): string {
+  return `${BASE_PATHS[scope]}/${slug}`;
+}
+
+function directory(scope: Scope): string {
+  return path.join(process.cwd(), DIRECTORIES[scope]);
+}
 
 export type ProcedureMeta = {
   slug: string;
+  scope: Scope;
   title: string;
   category: string;
   order: number;
@@ -18,19 +42,35 @@ export type ProcedureMeta = {
 
 export type Procedure = ProcedureMeta & { html: string };
 
-function readFile(slug: string) {
-  const raw = fs.readFileSync(path.join(CONTENT_DIR, `${slug}.md`), "utf8");
-  return matter(raw);
+function readFile(scope: Scope, slug: string) {
+  return matter(fs.readFileSync(path.join(directory(scope), `${slug}.md`), "utf8"));
 }
 
-function toMeta(slug: string, file: matter.GrayMatterFile<string>): ProcedureMeta {
+/**
+ * gray-matter laisse YAML convertir une date non quotee en objet Date.
+ * On ramene les deux formes a une chaine AAAA-MM-JJ pour que le reste du code
+ * n'ait qu'un seul cas a traiter.
+ */
+function toIsoDate(value: unknown): string | null {
+  if (value instanceof Date) {
+    return Number.isNaN(value.getTime()) ? null : value.toISOString().slice(0, 10);
+  }
+  if (typeof value === "string") {
+    const parsed = new Date(value);
+    return Number.isNaN(parsed.getTime()) ? null : value;
+  }
+  return null;
+}
+
+function toMeta(scope: Scope, slug: string, file: matter.GrayMatterFile<string>): ProcedureMeta {
   const data = file.data as Record<string, unknown>;
   return {
     slug,
+    scope,
     title: typeof data.title === "string" ? data.title : slug,
     category: typeof data.category === "string" ? data.category : "Divers",
     order: typeof data.order === "number" ? data.order : 999,
-    updated: typeof data.updated === "string" ? data.updated : null,
+    updated: toIsoDate(data.updated),
     summary: typeof data.summary === "string" ? data.summary : "",
     searchText: file.content
       .replace(/[#*`>_\-\[\]()]/g, " ")
@@ -40,40 +80,25 @@ function toMeta(slug: string, file: matter.GrayMatterFile<string>): ProcedureMet
   };
 }
 
-export function getSlugs(): string[] {
-  if (!fs.existsSync(CONTENT_DIR)) return [];
+export function getSlugs(scope: Scope): string[] {
+  const dir = directory(scope);
+  if (!fs.existsSync(dir)) return [];
   return fs
-    .readdirSync(CONTENT_DIR)
+    .readdirSync(dir)
     .filter((name) => name.endsWith(".md"))
     .map((name) => name.replace(/\.md$/, ""));
 }
 
-export function getAllProcedures(): ProcedureMeta[] {
-  return getSlugs()
-    .map((slug) => toMeta(slug, readFile(slug)))
+export function getAllProcedures(scope: Scope): ProcedureMeta[] {
+  return getSlugs(scope)
+    .map((slug) => toMeta(scope, slug, readFile(scope, slug)))
     .sort((a, b) => a.order - b.order || a.title.localeCompare(b.title, "fr"));
 }
 
-export async function getProcedure(slug: string): Promise<Procedure | null> {
-  if (!getSlugs().includes(slug)) return null;
-  const file = readFile(slug);
-  return { ...toMeta(slug, file), html: await marked.parse(file.content) };
-}
-
-/**
- * Regroupe par categorie. L'ordre des categories suit le plus petit `order`
- * qu'elles contiennent, ce qui evite d'avoir a maintenir une liste separee.
- */
-export function groupByCategory(procedures: ProcedureMeta[]) {
-  const groups = new Map<string, ProcedureMeta[]>();
-  for (const procedure of procedures) {
-    const bucket = groups.get(procedure.category);
-    if (bucket) bucket.push(procedure);
-    else groups.set(procedure.category, [procedure]);
-  }
-  return Array.from(groups.entries())
-    .map(([category, items]) => ({ category, items }))
-    .sort((a, b) => a.items[0].order - b.items[0].order);
+export async function getProcedure(scope: Scope, slug: string): Promise<Procedure | null> {
+  if (!getSlugs(scope).includes(slug)) return null;
+  const file = readFile(scope, slug);
+  return { ...toMeta(scope, slug, file), html: await marked.parse(file.content) };
 }
 
 export function formatDate(value: string | null): string | null {
@@ -82,3 +107,15 @@ export function formatDate(value: string | null): string | null {
   if (Number.isNaN(date.getTime())) return null;
   return new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "long", year: "numeric" }).format(date);
 }
+
+/** Nombre de mois ecoules depuis la derniere mise a jour, null si la date manque. */
+export function monthsSinceUpdate(value: string | null): number | null {
+  if (!value) return null;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  const days = (Date.now() - date.getTime()) / (1000 * 60 * 60 * 24);
+  return Math.max(0, Math.floor(days / 30.44));
+}
+
+/** Seuil au-dela duquel une procedure merite une relecture. */
+export const STALE_AFTER_MONTHS = 6;

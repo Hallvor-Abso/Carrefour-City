@@ -1,31 +1,31 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { AUTH_COOKIE, safeEqual, sessionToken } from "@/lib/auth";
+import { ADMIN_COOKIE, STAFF_COOKIE, hasLevel, isAdminPath, sessionToken } from "@/lib/auth";
 
 export async function middleware(request: NextRequest) {
-  const cookie = request.cookies.get(AUTH_COOKIE)?.value;
+  const { pathname, search } = request.nextUrl;
+  const admin = isAdminPath(pathname);
 
-  let expected: string;
-  try {
-    expected = await sessionToken();
-  } catch {
-    // Variables d'environnement absentes : on renvoie vers /login qui affiche
-    // le message de configuration plutot que de laisser le site ouvert.
+  // Site pas encore configure : on renvoie vers /login, qui explique quoi faire.
+  if ((await sessionToken("staff")) === null) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
-  if (cookie && safeEqual(cookie, expected)) {
+  const isAdmin = await hasLevel(request.cookies.get(ADMIN_COOKIE)?.value, "admin");
+  const isStaff = await hasLevel(request.cookies.get(STAFF_COOKIE)?.value, "staff");
+
+  // L'espace responsable exige le cookie responsable : les procedures qui y vivent
+  // sont protegees par leur chemin, pas par un filtrage a l'affichage.
+  if (admin ? isAdmin : isAdmin || isStaff) {
     return NextResponse.next();
   }
 
   const loginUrl = new URL("/login", request.url);
-  const target = request.nextUrl.pathname + request.nextUrl.search;
-  if (target !== "/") {
-    loginUrl.searchParams.set("suivant", target);
-  }
+  const target = pathname + search;
+  if (target !== "/") loginUrl.searchParams.set("suivant", target);
+  if (admin) loginUrl.searchParams.set("niveau", "admin");
   return NextResponse.redirect(loginUrl);
 }
 
 export const config = {
-  // Tout est protege sauf la page de connexion, ses routes API et les fichiers statiques.
   matcher: ["/((?!login|api/login|api/logout|_next/static|_next/image|favicon.ico|robots.txt).*)"],
 };

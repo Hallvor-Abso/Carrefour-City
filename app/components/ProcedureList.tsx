@@ -12,7 +12,15 @@ function normalize(value: string): string {
     .replace(/\p{Diacritic}/gu, "");
 }
 
-export default function ProcedureList({ procedures }: { procedures: ProcedureMeta[] }) {
+type ProcedureListProps = {
+  procedures: ProcedureMeta[];
+  /** Prefixe des liens : /procedures ou /admin/procedures. */
+  basePath: string;
+  /** L'espace responsable est court : la recherche n'y sert a rien. */
+  searchable?: boolean;
+};
+
+export default function ProcedureList({ procedures, basePath, searchable = true }: ProcedureListProps) {
   const [query, setQuery] = useState("");
 
   const haystacks = useMemo(
@@ -43,37 +51,44 @@ export default function ProcedureList({ procedures }: { procedures: ProcedureMet
 
   return (
     <div>
-      <label className="block">
-        <span className="sr-only">Rechercher une procédure</span>
-        <input
-          type="search"
-          value={query}
-          onChange={(event) => setQuery(event.target.value)}
-          placeholder="Rechercher : caisse, retour, ouverture…"
-          className="w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-base shadow-sm outline-none transition placeholder:text-slate-400 focus:border-brand-600 focus:ring-2 focus:ring-brand-600/20"
-        />
-      </label>
+      {searchable && (
+        <>
+          <label className="block">
+            <span className="sr-only">Rechercher une procédure</span>
+            <input
+              type="search"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="Rechercher : caisse, retour, livraison…"
+              className="w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-base shadow-card outline-none transition placeholder:text-slate-400 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/25"
+            />
+          </label>
 
-      {query.trim() && (
-        <p className="mt-3 text-sm text-slate-500">
-          {total === 0
-            ? "Aucune procédure ne correspond."
-            : `${total} procédure${total > 1 ? "s" : ""} trouvée${total > 1 ? "s" : ""}.`}
-        </p>
+          {query.trim() && (
+            <p className="mt-3 text-sm text-slate-500">
+              {total === 0
+                ? "Aucune procédure ne correspond."
+                : `${total} procédure${total > 1 ? "s" : ""} trouvée${total > 1 ? "s" : ""}.`}
+            </p>
+          )}
+        </>
       )}
 
-      <div className="mt-8 space-y-10">
+      <div className={searchable ? "mt-8 space-y-10" : "space-y-10"}>
         {groups.map((group) => (
           <section key={group.category}>
-            <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-500">{group.category}</h2>
+            <h2 className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-brand-500">
+              <span className="h-3 w-1 rounded-full bg-accent-500" aria-hidden="true" />
+              {group.category}
+            </h2>
             <ul className="mt-3 space-y-3">
               {group.items.map((procedure) => (
                 <li key={procedure.slug}>
                   <Link
-                    href={`/procedures/${procedure.slug}`}
-                    className="block rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition hover:border-brand-600 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-600"
+                    href={`${basePath}/${procedure.slug}`}
+                    className="block rounded-xl border border-slate-200 bg-white p-4 shadow-card transition hover:-translate-y-0.5 hover:border-brand-500 hover:shadow-raised focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
                   >
-                    <span className="block font-semibold text-slate-900">{procedure.title}</span>
+                    <span className="block font-semibold text-brand-900">{procedure.title}</span>
                     {procedure.summary && (
                       <span className="mt-1 block text-sm leading-relaxed text-slate-600">{procedure.summary}</span>
                     )}

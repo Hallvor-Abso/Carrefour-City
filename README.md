@@ -4,9 +4,25 @@ Petit site interne qui regroupe les procédures de l'équipe. Chaque procédure 
 Markdown : pas de base de données, pas d'interface d'administration, pas de coût d'hébergement.
 
 - Next.js (App Router), déployé sur Vercel
-- Accès protégé par un mot de passe partagé
+- Deux niveaux d'accès : l'équipe, et le responsable
 - Recherche instantanée, rendu mobile, fiches imprimables
 - Non indexé par les moteurs de recherche
+
+## Les deux niveaux d'accès
+
+| Niveau | Mot de passe | Ce qu'il ouvre |
+| --- | --- | --- |
+| Équipe | `SITE_PASSWORD` | Les procédures de `content/` |
+| Responsable | `ADMIN_PASSWORD` | Tout ce qui précède, plus `/admin` et les fiches de `content-admin/` |
+
+Le mot de passe responsable ouvre aussi le reste du site : pas besoin de se reconnecter pour
+passer d'un espace à l'autre. L'inverse est faux, et l'équipe ne voit aucun lien vers `/admin`.
+
+Les fiches réservées vivent sous `/admin/procedures/…`, une adresse que le middleware refuse
+sans le cookie responsable. Elles ne sont pas simplement masquées à l'affichage : leur contenu
+n'est jamais envoyé à un navigateur qui n'a que le niveau équipe.
+
+Si `ADMIN_PASSWORD` n'est pas défini, l'espace responsable n'existe tout simplement pas.
 
 ## Déploiement sur Vercel
 
@@ -17,6 +33,7 @@ Markdown : pas de base de données, pas d'interface d'administration, pas de co�
    | Nom | Valeur |
    | --- | --- |
    | `SITE_PASSWORD` | le mot de passe que l'équipe utilisera |
+   | `ADMIN_PASSWORD` | ton mot de passe de responsable, différent du précédent |
    | `AUTH_SECRET` | une longue chaîne aléatoire (voir ci-dessous) |
 
    Pour générer `AUTH_SECRET` :
@@ -27,16 +44,21 @@ Markdown : pas de base de données, pas d'interface d'administration, pas de co�
 
 4. Déployer. Le site est en ligne sur `https://<nom-du-projet>.vercel.app`.
 
-### Changer le mot de passe plus tard
+### Changer un mot de passe plus tard
 
-Modifier `SITE_PASSWORD` dans **Settings → Environment Variables**, puis redéployer
-(**Deployments → … → Redeploy**). Tout le monde est déconnecté et devra saisir le nouveau
-mot de passe : c'est voulu, c'est ce qui permet de couper l'accès à quelqu'un qui part.
+Modifier `SITE_PASSWORD` ou `ADMIN_PASSWORD` dans **Settings → Environment Variables**, puis
+redéployer (**Deployments → … → Redeploy**). Tout le monde est déconnecté du niveau concerné et
+devra saisir le nouveau mot de passe : c'est voulu, c'est ce qui permet de couper l'accès à
+quelqu'un qui part.
 
 ## Ajouter ou modifier une procédure
 
-Une procédure = un fichier `.md` dans `content/`. Le nom du fichier devient l'adresse de la page
-(`content/ouverture-du-magasin.md` → `/procedures/ouverture-du-magasin`).
+Une procédure = un fichier `.md`. Le nom du fichier devient l'adresse de la page.
+
+- `content/` → visible par l'équipe, à `/procedures/<nom-du-fichier>`
+- `content-admin/` → réservé au responsable, à `/admin/procedures/<nom-du-fichier>`
+
+Déplacer un fichier d'un dossier à l'autre suffit à changer qui peut le lire.
 
 ```markdown
 ---
@@ -71,7 +93,7 @@ Pour insérer une photo : la déposer dans `public/images/`, puis l'appeler depu
 ```bash
 npm install
 cp .env.example .env
-# renseigner SITE_PASSWORD et AUTH_SECRET dans .env
+# renseigner SITE_PASSWORD, ADMIN_PASSWORD et AUTH_SECRET dans .env
 npm run dev
 ```
 

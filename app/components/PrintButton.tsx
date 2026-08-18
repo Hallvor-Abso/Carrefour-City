@@ -5,7 +5,7 @@ export default function PrintButton() {
     <button
       type="button"
       onClick={() => window.print()}
-      className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-slate-50"
+      className="rounded-md border border-brand-200 bg-brand-50 px-3 py-1.5 text-sm font-semibold text-brand-700 transition hover:border-brand-500 hover:bg-brand-100"
     >
       Imprimer
     </button>

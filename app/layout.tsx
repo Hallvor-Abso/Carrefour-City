@@ -3,10 +3,10 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: {
-    default: "Procédures du magasin",
-    template: "%s · Procédures du magasin",
+    default: "Procédures · Carrefour City",
+    template: "%s · Procédures Carrefour City",
   },
-  description: "Les procédures internes de l'équipe, accessibles depuis le comptoir ou la réserve.",
+  description: "Les procédures internes du magasin, accessibles depuis le comptoir ou la réserve.",
   // Site interne : on ne veut pas le voir remonter dans les moteurs de recherche.
   robots: { index: false, follow: false },
 };
@@ -14,7 +14,7 @@ export const metadata: Metadata = {
 export const viewport = {
   width: "device-width",
   initialScale: 1,
-  themeColor: "#185746",
+  themeColor: "#0050a0",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

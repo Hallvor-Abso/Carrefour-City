@@ -1,12 +1,12 @@
 import ProcedureList from "@/app/components/ProcedureList";
-import { getAllProcedures } from "@/lib/content";
+import { basePath, getAllProcedures } from "@/lib/content";
 
 export default function HomePage() {
-  const procedures = getAllProcedures();
+  const procedures = getAllProcedures("staff");
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl">Les procédures du magasin</h1>
+      <h1 className="text-2xl font-extrabold text-brand-900 sm:text-3xl">Les procédures du magasin</h1>
       <p className="mt-2 text-slate-600">
         Cherche la procédure dont tu as besoin, ou parcours la liste par thème. Chaque fiche est imprimable.
       </p>
@@ -18,7 +18,7 @@ export default function HomePage() {
             dossier <code className="font-mono">content/</code> du dépôt.
           </p>
         ) : (
-          <ProcedureList procedures={procedures} />
+          <ProcedureList procedures={procedures} basePath={basePath("staff")} />
         )}
       </div>
     </div>

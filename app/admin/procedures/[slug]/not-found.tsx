@@ -5,8 +5,8 @@ export default function NotFound() {
     <div className="rounded-xl border border-slate-200 bg-white p-8 text-center shadow-card">
       <h1 className="text-xl font-bold text-brand-900">Cette procédure n&apos;existe pas</h1>
       <p className="mt-2 text-slate-600">Elle a peut-être été renommée ou supprimée.</p>
-      <Link href="/" className="mt-6 inline-block font-semibold text-brand-600 hover:underline">
-        Retour à la liste
+      <Link href="/admin" className="mt-6 inline-block font-semibold text-brand-600 hover:underline">
+        Retour à l&apos;espace responsable
       </Link>
     </div>
   );
