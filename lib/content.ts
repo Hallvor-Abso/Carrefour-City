@@ -73,8 +73,8 @@ function toMeta(scope: Scope, slug: string, file: matter.GrayMatterFile<string>)
     updated: toIsoDate(data.updated),
     summary: typeof data.summary === "string" ? data.summary : "",
     searchText: file.content
-      .replace(/[#*`>_\-\[\]()]/g, " ")
-      .replace(/\s+/g, " ")
+      .replace(/[#*`>_\\-\\[\\]()]/g, " ")
+      .replace(/\\s+/g, " ")
       .trim()
       .toLowerCase(),
   };
@@ -86,7 +86,7 @@ export function getSlugs(scope: Scope): string[] {
   return fs
     .readdirSync(dir)
     .filter((name) => name.endsWith(".md"))
-    .map((name) => name.replace(/\.md$/, ""));
+    .map((name) => name.replace(/\\.md$/, ""));
 }
 
 export function getAllProcedures(scope: Scope): ProcedureMeta[] {
@@ -99,6 +99,25 @@ export async function getProcedure(scope: Scope, slug: string): Promise<Procedur
   if (!getSlugs(scope).includes(slug)) return null;
   const file = readFile(scope, slug);
   return { ...toMeta(scope, slug, file), html: await marked.parse(file.content) };
+}
+
+/**
+ * Le Markdown brut d'une fiche, tel qu'il est stocke : c'est ce que l'editeur
+ * remet dans sa zone de saisie, contrairement a getProcedure qui rend du HTML.
+ */
+export function getProcedureSource(scope: Scope, slug: string): { meta: ProcedureMeta; body: string } | null {
+  if (!getSlugs(scope).includes(slug)) return null;
+  const file = readFile(scope, slug);
+  return { meta: toMeta(scope, slug, file), body: file.content.trim() };
+}
+
+/** Toutes les categories deja utilisees, pour proposer l'autocompletion dans l'editeur. */
+export function getCategories(): string[] {
+  const seen = new Set<string>();
+  for (const scope of ["staff", "admin"] as Scope[]) {
+    for (const procedure of getAllProcedures(scope)) seen.add(procedure.category);
+  }
+  return Array.from(seen).sort((a, b) => a.localeCompare(b, "fr"));
 }
 
 export function formatDate(value: string | null): string | null {

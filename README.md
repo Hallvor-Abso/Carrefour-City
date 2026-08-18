@@ -5,6 +5,7 @@ Markdown : pas de base de données, pas d'interface d'administration, pas de co�
 
 - Next.js (App Router), déployé sur Vercel
 - Deux niveaux d'accès : l'équipe, et le responsable
+- Éditeur intégré : le responsable crée et modifie les fiches depuis le site
 - Recherche instantanée, rendu mobile, fiches imprimables
 - Non indexé par les moteurs de recherche
 
@@ -35,6 +36,8 @@ Si `ADMIN_PASSWORD` n'est pas défini, l'espace responsable n'existe tout simple
    | `SITE_PASSWORD` | le mot de passe que l'équipe utilisera |
    | `ADMIN_PASSWORD` | ton mot de passe de responsable, différent du précédent |
    | `AUTH_SECRET` | une longue chaîne aléatoire (voir ci-dessous) |
+   | `GITHUB_TOKEN` | un jeton GitHub, pour l'éditeur intégré (voir plus bas) |
+   | `GITHUB_REPO` | `Hallvor-Abso/Carrefour-City` |
 
    Pour générer `AUTH_SECRET` :
 
@@ -51,7 +54,33 @@ redéployer (**Deployments → … → Redeploy**). Tout le monde est déconnect
 devra saisir le nouveau mot de passe : c'est voulu, c'est ce qui permet de couper l'accès à
 quelqu'un qui part.
 
-## Ajouter ou modifier une procédure
+## Modifier les procédures depuis le site
+
+Le responsable dispose d'un éditeur à l'adresse `/admin/fiches` : créer, modifier, déplacer d'un
+espace à l'autre, supprimer. Pas besoin de connaître GitHub.
+
+Le système de fichiers de Vercel étant en lecture seule, l'éditeur n'écrit pas sur le serveur : il
+**écrit dans le dépôt** via l'API GitHub. Chaque enregistrement est donc un commit — l'historique
+montre qui a changé quelle règle et quand — et Vercel reconstruit le site tout seul. Compte environ
+une minute entre l'enregistrement et le moment où l'équipe voit la nouvelle version. La liste de
+`/admin/fiches`, elle, lit directement le dépôt : ce que tu viens d'enregistrer y apparaît tout de
+suite.
+
+### Créer le jeton GitHub
+
+1. Sur GitHub : **Settings → Developer settings → Personal access tokens → Fine-grained tokens →
+   Generate new token**.
+2. **Repository access** : *Only select repositories*, puis ce dépôt uniquement.
+3. **Permissions → Repository permissions → Contents** : *Read and write*. Rien d'autre.
+4. Copier le jeton et le coller dans `GITHUB_TOKEN` sur Vercel, avec `GITHUB_REPO`.
+
+Sans ces deux variables le site fonctionne normalement, mais l'éditeur s'affiche désactivé et les
+fiches se modifient uniquement sur GitHub.
+
+Un jeton fine-grained expire (12 mois au maximum). À l'expiration, l'éditeur affichera que GitHub
+refuse le jeton : il suffit d'en générer un nouveau et de remplacer la variable.
+
+## Modifier les procédures depuis GitHub
 
 Une procédure = un fichier `.md`. Le nom du fichier devient l'adresse de la page.
 

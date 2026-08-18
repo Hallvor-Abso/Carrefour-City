@@ -8,6 +8,7 @@ import {
   hrefFor,
   monthsSinceUpdate,
 } from "@/lib/content";
+import { githubConfig } from "@/lib/github";
 
 export const metadata = { title: "Espace responsable" };
 
@@ -15,6 +16,7 @@ export default function AdminPage() {
   const adminProcedures = getAllProcedures("admin");
   const staffProcedures = getAllProcedures("staff");
   const all = [...staffProcedures, ...adminProcedures];
+  const writable = githubConfig() !== null;
 
   const stale = all.filter((procedure) => {
     const months = monthsSinceUpdate(procedure.updated);
@@ -24,11 +26,22 @@ export default function AdminPage() {
   return (
     <div className="space-y-12">
       <section>
-        <h1 className="text-2xl font-extrabold text-brand-900 sm:text-3xl">Espace responsable</h1>
-        <p className="mt-2 text-slate-600">
-          Les procédures de cette page ne sont visibles qu&apos;avec le mot de passe responsable. L&apos;équipe ne les
-          voit pas, et leurs adresses ne sont pas accessibles avec le mot de passe du magasin.
-        </p>
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-extrabold text-brand-900 sm:text-3xl">Espace responsable</h1>
+            <p className="mt-2 max-w-xl text-slate-600">
+              Les procédures de cette page ne sont visibles qu&apos;avec le mot de passe responsable. L&apos;équipe ne
+              les voit pas, et leurs adresses ne sont pas accessibles avec le mot de passe du magasin.
+            </p>
+          </div>
+
+          <Link
+            href="/admin/fiches"
+            className="rounded-lg bg-brand-500 px-4 py-2.5 font-bold text-white transition hover:bg-brand-600"
+          >
+            Gérer les procédures
+          </Link>
+        </div>
 
         <dl className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3">
           <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-card">
@@ -53,8 +66,11 @@ export default function AdminPage() {
         <div className="mt-4">
           {adminProcedures.length === 0 ? (
             <p className="rounded-xl border border-dashed border-slate-300 bg-white p-6 text-slate-600">
-              Aucune fiche réservée. Ajoute un fichier <code className="font-mono">.md</code> dans le dossier{" "}
-              <code className="font-mono">content-admin/</code> du dépôt.
+              Aucune fiche réservée.{" "}
+              <Link href="/admin/fiches/nouvelle" className="font-semibold text-brand-600 hover:underline">
+                Créer la première
+              </Link>
+              .
             </p>
           ) : (
             <ProcedureList procedures={adminProcedures} basePath={basePath("admin")} searchable={false} />
@@ -75,6 +91,9 @@ export default function AdminPage() {
                 <th className="px-4 py-3 font-semibold text-brand-900">Procédure</th>
                 <th className="px-4 py-3 font-semibold text-brand-900">Espace</th>
                 <th className="px-4 py-3 font-semibold text-brand-900">Mise à jour</th>
+                <th className="px-4 py-3 font-semibold text-brand-900">
+                  <span className="sr-only">Actions</span>
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -104,6 +123,14 @@ export default function AdminPage() {
                         </span>
                       )}
                     </td>
+                    <td className="px-4 py-3 text-right">
+                      <Link
+                        href={`/admin/fiches/${procedure.scope}/${procedure.slug}`}
+                        className="font-medium text-brand-600 hover:underline"
+                      >
+                        Modifier
+                      </Link>
+                    </td>
                   </tr>
                 );
               })}
@@ -113,12 +140,21 @@ export default function AdminPage() {
       </section>
 
       <section className="rounded-xl border border-brand-100 bg-brand-50 p-5 text-sm leading-relaxed text-brand-900">
-        <h2 className="font-bold">Modifier le contenu</h2>
+        <h2 className="font-bold">Comment ça marche</h2>
         <p className="mt-2">
-          Les fiches de l&apos;équipe sont dans <code className="font-mono">content/</code>, les tiennes dans{" "}
-          <code className="font-mono">content-admin/</code>. Un fichier Markdown par fiche : tu le modifies sur GitHub,
-          Vercel remet le site à jour tout seul en une minute environ.
+          Chaque fiche est un fichier Markdown dans le dépôt. Quand tu enregistres depuis{" "}
+          <Link href="/admin/fiches" className="font-semibold underline">
+            Gérer les procédures
+          </Link>
+          , le fichier est écrit dans le dépôt et le site se reconstruit tout seul : compte environ une minute avant de
+          voir le changement. Chaque enregistrement laisse une trace, tu peux donc retrouver qui a changé quoi et quand.
         </p>
+        {!writable && (
+          <p className="mt-2 font-semibold">
+            L&apos;édition depuis le site est désactivée tant que GITHUB_TOKEN et GITHUB_REPO ne sont pas renseignés
+            dans les réglages Vercel.
+          </p>
+        )}
         <p className="mt-2">
           Pour changer un mot de passe, modifie <code className="font-mono">SITE_PASSWORD</code> ou{" "}
           <code className="font-mono">ADMIN_PASSWORD</code> dans les réglages Vercel, puis redéploie. Tout le monde est
